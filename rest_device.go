@@ -35,7 +35,7 @@ func restGetAllDevices(w http.ResponseWriter, _ *http.Request) {
 	res := make([]models.Device, 0)
 	err := getAllDevices(&res)
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -43,7 +43,7 @@ func restGetAllDevices(w http.ResponseWriter, _ *http.Request) {
 	// Check the max length
 	if len(res) > configuration.ReadMaxLimit {
 		err = errors.New("Max limit exceeded")
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusRequestEntityTooLarge)
 		return
 	}
@@ -62,7 +62,7 @@ func restAddNewDevice(w http.ResponseWriter, r *http.Request) {
 	var d models.Device
 	err := json.NewDecoder(r.Body).Decode(&d)
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -74,7 +74,7 @@ func restAddNewDevice(w http.ResponseWriter, r *http.Request) {
 		// Try by ID
 		err = getAddressableById(&d.Addressable, d.Addressable.Id.Hex())
 		if err != nil {
-			loggingClient.Error(err.Error(), "")
+			loggingClient.Debug(err.Error(), "")
 			http.Error(w, err.Error()+": A device must be associated to an Addressable", http.StatusConflict)
 			return
 		}
@@ -87,7 +87,7 @@ func restAddNewDevice(w http.ResponseWriter, r *http.Request) {
 		// Try by ID
 		err = getDeviceServiceById(&d.Service, d.Service.Service.Id.Hex())
 		if err != nil {
-			loggingClient.Error(err.Error(), "")
+			loggingClient.Debug(err.Error(), "")
 			http.Error(w, err.Error()+": A device must be associated with a device service", http.StatusConflict)
 			return
 		}
@@ -100,7 +100,7 @@ func restAddNewDevice(w http.ResponseWriter, r *http.Request) {
 		// Try by ID
 		err = getDeviceProfileById(&d.Profile, d.Profile.Id.Hex())
 		if err != nil {
-			loggingClient.Error(err.Error(), "")
+			loggingClient.Debug(err.Error(), "")
 			http.Error(w, err.Error()+": A device must be associated with a device profile", http.StatusConflict)
 			return
 		}
@@ -109,7 +109,7 @@ func restAddNewDevice(w http.ResponseWriter, r *http.Request) {
 	// Check operating/admin state
 	if d.OperatingState == models.OperatingState("") || d.AdminState == models.AdminState("") {
 		err = errors.New("Device can't have null operating state or admin state")
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusConflict)
 		return
 	}
@@ -122,7 +122,7 @@ func restAddNewDevice(w http.ResponseWriter, r *http.Request) {
 		} else {
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		}
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
@@ -141,7 +141,7 @@ func restUpdateDevice(w http.ResponseWriter, r *http.Request) {
 	var rd models.Device
 	err := json.NewDecoder(r.Body).Decode(&rd)
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -154,20 +154,20 @@ func restUpdateDevice(w http.ResponseWriter, r *http.Request) {
 		// Then try name
 		err = getDeviceByName(&oldDevice, rd.Name)
 		if err != nil {
-			loggingClient.Error(err.Error(), "")
+			loggingClient.Debug(err.Error(), "")
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
 		}
 	}
 
 	if err = updateDeviceFields(rd, &oldDevice); err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
 
 	if err = UpdateDevice(oldDevice); err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -259,7 +259,7 @@ func updateDeviceFields(from models.Device, to *models.Device) error {
 		if err != nil {
 			// A problem occured accessing database
 			if err != mgo.ErrNotFound {
-				loggingClient.Error(err.Error(), "")
+				loggingClient.Debug(err.Error(), "")
 				return err
 			}
 		}
@@ -269,7 +269,7 @@ func updateDeviceFields(from models.Device, to *models.Device) error {
 			// Differnt IDs -> Name is not unique
 			if checkD.Id != to.Id {
 				err = errors.New("Duplicate name for Device")
-				loggingClient.Error(err.Error(), "")
+				loggingClient.Debug(err.Error(), "")
 				return err
 			}
 		}
@@ -282,7 +282,7 @@ func restGetDevicesWithLabel(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	label, err := url.QueryUnescape(vars[LABEL])
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -293,7 +293,7 @@ func restGetDevicesWithLabel(w http.ResponseWriter, r *http.Request) {
 	res := make([]models.Device, 0)
 	err = getDevicesWithLabel(&res, labels)
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -315,7 +315,7 @@ func restGetDeviceByProfileId(w http.ResponseWriter, r *http.Request) {
 		} else {
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		}
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
@@ -323,7 +323,7 @@ func restGetDeviceByProfileId(w http.ResponseWriter, r *http.Request) {
 	err = getDevicesByProfileId(&res, pid)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
@@ -345,14 +345,14 @@ func restGetDeviceByServiceId(w http.ResponseWriter, r *http.Request) {
 		} else {
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		}
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
 	err = getDevicesByServiceId(&res, sid)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
@@ -365,7 +365,7 @@ func restGetDeviceByServiceName(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	sn, err := url.QueryUnescape(vars[SERVICENAME])
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -379,7 +379,7 @@ func restGetDeviceByServiceName(w http.ResponseWriter, r *http.Request) {
 		} else {
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		}
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
@@ -389,7 +389,7 @@ func restGetDeviceByServiceName(w http.ResponseWriter, r *http.Request) {
 	err = getDevicesByServiceId(&res, ds.Service.Id.Hex())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
@@ -401,7 +401,7 @@ func restGetDeviceByAddressableName(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	an, err := url.QueryUnescape(vars[ADDRESSABLENAME])
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -415,7 +415,7 @@ func restGetDeviceByAddressableName(w http.ResponseWriter, r *http.Request) {
 		} else {
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		}
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
@@ -425,7 +425,7 @@ func restGetDeviceByAddressableName(w http.ResponseWriter, r *http.Request) {
 	err = getDevicesByAddressableId(&res, a.Id.Hex())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
@@ -437,7 +437,7 @@ func restGetDeviceByProfileName(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	pn, err := url.QueryUnescape(vars[PROFILENAME])
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -451,7 +451,7 @@ func restGetDeviceByProfileName(w http.ResponseWriter, r *http.Request) {
 		} else {
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		}
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
@@ -461,7 +461,7 @@ func restGetDeviceByProfileName(w http.ResponseWriter, r *http.Request) {
 	err = getDevicesByProfileId(&res, dp.Id.Hex())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
@@ -482,7 +482,7 @@ func restGetDeviceByAddressableId(w http.ResponseWriter, r *http.Request) {
 		} else {
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		}
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
@@ -490,7 +490,7 @@ func restGetDeviceByAddressableId(w http.ResponseWriter, r *http.Request) {
 	err = getDevicesByAddressableId(&res, aid)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
@@ -503,7 +503,7 @@ func restGetDeviceById(w http.ResponseWriter, r *http.Request) {
 	var did string = vars[ID]
 	var res models.Device
 	if err := getDeviceById(&res, did); err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		if err == mgo.ErrNotFound {
 			http.Error(w, err.Error(), http.StatusNotFound)
 		} else {
@@ -523,7 +523,7 @@ func restSetDeviceOpStateById(w http.ResponseWriter, r *http.Request) {
 	if !f {
 		err := errors.New("Invalid State: " + os + " Must be 'ENABLED' or 'DISABLED'")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
@@ -536,7 +536,7 @@ func restSetDeviceOpStateById(w http.ResponseWriter, r *http.Request) {
 		} else {
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		}
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
@@ -545,7 +545,7 @@ func restSetDeviceOpStateById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -559,7 +559,7 @@ func restSetDeviceOpStateByName(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	n, err := url.QueryUnescape(vars[NAME])
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -568,7 +568,7 @@ func restSetDeviceOpStateByName(w http.ResponseWriter, r *http.Request) {
 	// Opstate is invalid
 	if !f {
 		err := errors.New("Invalid State: " + os + " Must be 'ENABLED' or 'DISABLED'")
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -582,7 +582,7 @@ func restSetDeviceOpStateByName(w http.ResponseWriter, r *http.Request) {
 		} else {
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		}
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
@@ -599,7 +599,7 @@ func restSetDeviceOpStateByName(w http.ResponseWriter, r *http.Request) {
 func setOpState(d models.Device, os string, w http.ResponseWriter) error {
 	err := setById(DEVICECOL, d.Id.Hex(), "operatingState", os)
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return err
 	}
@@ -617,7 +617,7 @@ func restSetDeviceAdminStateById(w http.ResponseWriter, r *http.Request) {
 	f := models.IsAdminStateType(as)
 	if !f {
 		err := errors.New("Invalid State: " + as + " Must be 'LOCKED' or 'UNLOCKED'")
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -631,7 +631,7 @@ func restSetDeviceAdminStateById(w http.ResponseWriter, r *http.Request) {
 		} else {
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		}
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
@@ -649,7 +649,7 @@ func restSetDeviceAdminStateByName(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	n, err := url.QueryUnescape(vars[NAME])
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -658,7 +658,7 @@ func restSetDeviceAdminStateByName(w http.ResponseWriter, r *http.Request) {
 	f := models.IsAdminStateType(as)
 	if !f {
 		err = errors.New("Invalid State: " + as + " Must be 'LOCKED' or 'UNLOCKED'")
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -672,7 +672,7 @@ func restSetDeviceAdminStateByName(w http.ResponseWriter, r *http.Request) {
 		} else {
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		}
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
@@ -689,7 +689,7 @@ func restSetDeviceAdminStateByName(w http.ResponseWriter, r *http.Request) {
 // Update the admin state for the device
 func setAdminState(d models.Device, as string, w http.ResponseWriter) error {
 	if err := setById(DEVICECOL, d.Id.Hex(), ADMINSTATE, as); err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return err
 	}
@@ -714,12 +714,12 @@ func restDeleteDeviceById(w http.ResponseWriter, r *http.Request) {
 		} else {
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		}
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
 	if err := deleteDevice(d, w); err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
@@ -730,7 +730,7 @@ func restDeleteDeviceByName(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	n, err := url.QueryUnescape(vars[NAME])
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -739,13 +739,13 @@ func restDeleteDeviceByName(w http.ResponseWriter, r *http.Request) {
 	var d models.Device
 	err = getDeviceByName(&d, n)
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
 	if err := deleteDevice(d, w); err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
@@ -777,7 +777,7 @@ func deleteAssociatedReportsForDevice(d models.Device, w http.ResponseWriter) er
 	var reports []models.DeviceReport
 	if err := getDeviceReportByDeviceName(&reports, d.Name); err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return err
 	}
 
@@ -785,7 +785,7 @@ func deleteAssociatedReportsForDevice(d models.Device, w http.ResponseWriter) er
 	for _, report := range reports {
 		if err := deleteById(DRCOL, report.Id.Hex()); err != nil {
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
-			loggingClient.Error(err.Error(), "")
+			loggingClient.Debug(err.Error(), "")
 			return err
 		}
 		notifyDeviceReportAssociates(report, models.DELETE)
@@ -800,7 +800,7 @@ func restSetDeviceLastConnectedById(w http.ResponseWriter, r *http.Request) {
 	var vlc string = vars[LASTCONNECTED]
 	lc, err := strconv.ParseInt(vlc, 10, 64)
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -814,7 +814,7 @@ func restSetDeviceLastConnectedById(w http.ResponseWriter, r *http.Request) {
 		} else {
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		}
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
@@ -834,13 +834,13 @@ func restSetLastConnectedByIdNotify(w http.ResponseWriter, r *http.Request) {
 	var vlc = vars[LASTCONNECTED]
 	notify, err := strconv.ParseBool(vars[LASTCONNECTEDNOTIFY])
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
 	lc, err := strconv.ParseInt(vlc, 10, 64)
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -854,7 +854,7 @@ func restSetLastConnectedByIdNotify(w http.ResponseWriter, r *http.Request) {
 		} else {
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		}
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
@@ -871,14 +871,14 @@ func restSetDeviceLastConnectedByName(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	n, err := url.QueryUnescape(vars[NAME])
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
 	var vlc string = vars[LASTCONNECTED]
 	lc, err := strconv.ParseInt(vlc, 10, 64)
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -892,7 +892,7 @@ func restSetDeviceLastConnectedByName(w http.ResponseWriter, r *http.Request) {
 		} else {
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		}
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
@@ -909,20 +909,20 @@ func restSetDeviceLastConnectedByNameNotify(w http.ResponseWriter, r *http.Reque
 	vars := mux.Vars(r)
 	n, err := url.QueryUnescape(vars[NAME])
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
 	var vlc string = vars[LASTCONNECTED]
 	lc, err := strconv.ParseInt(vlc, 10, 64)
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
 	notify, err := strconv.ParseBool(vars[LASTCONNECTEDNOTIFY])
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -936,7 +936,7 @@ func restSetDeviceLastConnectedByNameNotify(w http.ResponseWriter, r *http.Reque
 		} else {
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		}
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
@@ -952,7 +952,7 @@ func restSetDeviceLastConnectedByNameNotify(w http.ResponseWriter, r *http.Reque
 // Update the last connected value for the device
 func setLastConnected(d models.Device, time int64, notify bool, w http.ResponseWriter) error {
 	if err := setByIdInt(DEVICECOL, d.Id.Hex(), LASTCONNECTED, time); err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return err
 	}
@@ -970,7 +970,7 @@ func restSetDeviceLastReportedById(w http.ResponseWriter, r *http.Request) {
 	var vlr string = vars[LASTREPORTED]
 	lr, err := strconv.ParseInt(vlr, 10, 64)
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -984,7 +984,7 @@ func restSetDeviceLastReportedById(w http.ResponseWriter, r *http.Request) {
 		} else {
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		}
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
@@ -1003,13 +1003,13 @@ func restSetDeviceLastReportedByIdNotify(w http.ResponseWriter, r *http.Request)
 	var vlr string = vars[LASTREPORTED]
 	lr, err := strconv.ParseInt(vlr, 10, 64)
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
 	notify, err := strconv.ParseBool(vars[LASTREPORTEDNOTIFY])
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -1023,7 +1023,7 @@ func restSetDeviceLastReportedByIdNotify(w http.ResponseWriter, r *http.Request)
 		} else {
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		}
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
@@ -1040,14 +1040,14 @@ func restSetDeviceLastReportedByName(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	n, err := url.QueryUnescape(vars[NAME])
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
 	var vlr string = vars[LASTREPORTED]
 	lr, err := strconv.ParseInt(vlr, 10, 64)
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -1061,7 +1061,7 @@ func restSetDeviceLastReportedByName(w http.ResponseWriter, r *http.Request) {
 		} else {
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		}
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
@@ -1078,20 +1078,20 @@ func restSetDeviceLastReportedByNameNotify(w http.ResponseWriter, r *http.Reques
 	vars := mux.Vars(r)
 	n, err := url.QueryUnescape(vars[NAME])
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
 	var vlr string = vars[LASTREPORTED]
 	lr, err := strconv.ParseInt(vlr, 10, 64)
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
 	notify, err := strconv.ParseBool(vars[LASTREPORTEDNOTIFY])
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -1105,7 +1105,7 @@ func restSetDeviceLastReportedByNameNotify(w http.ResponseWriter, r *http.Reques
 		} else {
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		}
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
@@ -1121,7 +1121,7 @@ func restSetDeviceLastReportedByNameNotify(w http.ResponseWriter, r *http.Reques
 // Update the last reported field of the device
 func setLastReported(d models.Device, time int64, notify bool, w http.ResponseWriter) error {
 	if err := setByIdInt(DEVICECOL, d.Id.Hex(), LASTREPORTED, time); err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return err
 	}
@@ -1137,7 +1137,7 @@ func restGetDeviceByName(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	dn, err := url.QueryUnescape(vars[NAME])
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -1149,7 +1149,7 @@ func restGetDeviceByName(w http.ResponseWriter, r *http.Request) {
 		} else {
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		}
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -1164,7 +1164,7 @@ func notifyDeviceAssociates(d models.Device, action models.NotifyAction) error {
 	// Callback for device service
 	var ds models.DeviceService
 	if err := getDeviceServiceById(&ds, d.Service.Service.Id.Hex()); err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return err
 	}
 	var services []models.DeviceService

@@ -34,13 +34,13 @@ func restGetAllAddressables(w http.ResponseWriter, _ *http.Request) {
 	results := make([]models.Addressable, 0)
 	err := getAddressables(&results, bson.M{})
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
 	if len(results) > configuration.ReadMaxLimit {
 		err = errors.New("Max limit exceeded")
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusRequestEntityTooLarge)
 		return
 	}
@@ -55,7 +55,7 @@ func restAddAddressable(w http.ResponseWriter, r *http.Request) {
 	var a models.Addressable
 	err := json.NewDecoder(r.Body).Decode(&a)
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -67,7 +67,7 @@ func restAddAddressable(w http.ResponseWriter, r *http.Request) {
 		} else {
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		}
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
@@ -84,7 +84,7 @@ func restUpdateAddressable(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	var ra models.Addressable
 	if err := json.NewDecoder(r.Body).Decode(&ra); err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -100,7 +100,7 @@ func restUpdateAddressable(w http.ResponseWriter, r *http.Request) {
 			} else {
 				http.Error(w, err.Error(), http.StatusServiceUnavailable)
 			}
-			loggingClient.Error(err.Error(), "")
+			loggingClient.Debug(err.Error(), "")
 			return
 		}
 	}
@@ -109,20 +109,20 @@ func restUpdateAddressable(w http.ResponseWriter, r *http.Request) {
 	if ra.Name != "" && ra.Name != res.Name {
 		isStillInUse, err := isAddressableStillInUse(res)
 		if err != nil {
-			loggingClient.Error(err.Error(), "")
+			loggingClient.Debug(err.Error(), "")
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 			return
 		}
 		if isStillInUse {
 			err = errors.New("Data integrity issue: Addressable is still in use")
-			loggingClient.Error(err.Error(), "")
+			loggingClient.Debug(err.Error(), "")
 			http.Error(w, err.Error(), http.StatusConflict)
 			return
 		}
 	}
 
 	if err := updateAddressable(&ra, &res); err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		if err == mgo.ErrNotFound {
 			http.Error(w, err.Error(), http.StatusNotFound)
 		} else {
@@ -145,7 +145,7 @@ func restGetAddressableById(w http.ResponseWriter, r *http.Request) {
 		if err == mgo.ErrNotFound {
 			http.Error(w, err.Error(), http.StatusNotFound)
 		} else {
-			loggingClient.Error(err.Error(), "")
+			loggingClient.Debug(err.Error(), "")
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		}
 		return
@@ -161,7 +161,7 @@ func restDeleteAddressableById(w http.ResponseWriter, r *http.Request) {
 	var a models.Addressable
 	err := getAddressableById(&a, id)
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
@@ -169,13 +169,13 @@ func restDeleteAddressableById(w http.ResponseWriter, r *http.Request) {
 	// Check if the addressable is still in use
 	isStillInUse, err := isAddressableStillInUse(a)
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
 	if isStillInUse {
 		err = errors.New("Data integrity issue: attempt to delete addressable still in use by a device or device service")
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusConflict)
 		return
 	}
@@ -183,11 +183,11 @@ func restDeleteAddressableById(w http.ResponseWriter, r *http.Request) {
 	err = deleteById(ADDCOL, id)
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			loggingClient.Error(err.Error(), "")
+			loggingClient.Debug(err.Error(), "")
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
 		}
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -201,7 +201,7 @@ func restDeleteAddressableByName(w http.ResponseWriter, r *http.Request) {
 	n, err := url.QueryUnescape(vars[NAME])
 	// Problems unescaping
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -210,7 +210,7 @@ func restDeleteAddressableByName(w http.ResponseWriter, r *http.Request) {
 	var a models.Addressable
 	err = getAddressableByName(&a, n)
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
@@ -218,19 +218,19 @@ func restDeleteAddressableByName(w http.ResponseWriter, r *http.Request) {
 	// Check if the addressable is still in use
 	isStillInUse, err := isAddressableStillInUse(a)
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
 	if isStillInUse {
 		err = errors.New("Data integrity issue: attempt to delete addressable still in use by a device or device service")
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusConflict)
 		return
 	}
 
 	if err := deleteByName(ADDCOL, n); err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		if err == mgo.ErrNotFound {
 			http.Error(w, err.Error(), http.StatusNotFound)
 		} else {
@@ -274,13 +274,13 @@ func restGetAddressableByName(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	dn, err := url.QueryUnescape(vars[NAME])
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
 	var result models.Addressable
 	if err := getAddressableByName(&result, dn); err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		if err == mgo.ErrNotFound {
 			http.Error(w, err.Error(), http.StatusNotFound)
 		} else {
@@ -297,7 +297,7 @@ func restGetAddressableByTopic(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	t, err := url.QueryUnescape(vars[TOPIC])
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -305,7 +305,7 @@ func restGetAddressableByTopic(w http.ResponseWriter, r *http.Request) {
 
 	err = getAddressablesByTopic(&res, t)
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		if err == mgo.ErrNotFound {
 			http.Error(w, err.Error(), http.StatusNotFound)
 		} else {
@@ -322,14 +322,14 @@ func restGetAddressableByPort(w http.ResponseWriter, r *http.Request) {
 	var strp string = vars[PORT]
 	p, err := strconv.Atoi(strp)
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	res := make([]models.Addressable, 0)
 	if err := getAddressablesByPort(&res, p); err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -341,14 +341,14 @@ func restGetAddressableByPublisher(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	p, err := url.QueryUnescape(vars[PUBLISHER])
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
 	res := make([]models.Addressable, 0)
 	err = getAddressablesByPublisher(&res, p)
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -360,14 +360,14 @@ func restGetAddressableByAddress(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	a, err := url.QueryUnescape(vars[ADDRESS])
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
 	res := make([]models.Addressable, 0)
 	err = getAddressablesByAddress(&res, a)
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -380,7 +380,7 @@ func restGetAddressableByAddress(w http.ResponseWriter, r *http.Request) {
 func notifyAddressableAssociates(a models.Addressable, action models.NotifyAction) error {
 	var ds []models.DeviceService
 	if err := getDeviceServicesByAddressableId(&ds, a.Id.Hex()); err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return err
 	}
 	if err := notifyAssociates(ds, a.Id.Hex(), action, models.ADDRESSABLE); err != nil {

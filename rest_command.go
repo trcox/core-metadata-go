@@ -32,13 +32,13 @@ func restGetAllCommands(w http.ResponseWriter, _ *http.Request) {
 	results := make([]models.Command, 0)
 	err := getAllCommands(&results)
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	if len(results) > configuration.ReadMaxLimit {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, errors.New("Max limit exceeded").Error(), http.StatusRequestEntityTooLarge)
 		return
 	}
@@ -51,13 +51,13 @@ func restAddCommand(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	var c models.Command
 	if err := json.NewDecoder(r.Body).Decode(&c); err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
 
 	if err := addCommand(&c); err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -74,7 +74,7 @@ func restUpdateCommand(w http.ResponseWriter, r *http.Request) {
 	var c models.Command
 	var res models.Command
 	if err := json.NewDecoder(r.Body).Decode(&c); err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -82,7 +82,7 @@ func restUpdateCommand(w http.ResponseWriter, r *http.Request) {
 	// Check if command exists (By ID)
 	err := getCommandById(&res, c.Id.Hex())
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
@@ -92,7 +92,7 @@ func restUpdateCommand(w http.ResponseWriter, r *http.Request) {
 		var dp []models.DeviceProfile
 		err = getDeviceProfilesUsingCommand(&dp, c)
 		if err != nil {
-			loggingClient.Error(err.Error(), "")
+			loggingClient.Debug(err.Error(), "")
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 			return
 		}
@@ -102,7 +102,7 @@ func restUpdateCommand(w http.ResponseWriter, r *http.Request) {
 			for _, command := range profile.Commands {
 				if command.Name == c.Name && command.Id != c.Id {
 					err = errors.New("Error updating command: duplicate command name in device profile")
-					loggingClient.Error(err.Error(), "")
+					loggingClient.Debug(err.Error(), "")
 					http.Error(w, err.Error(), http.StatusConflict)
 					return
 				}
@@ -111,7 +111,7 @@ func restUpdateCommand(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := updateCommand(&c, &res); err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -132,7 +132,7 @@ func restGetCommandById(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		}
 
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -143,14 +143,14 @@ func restGetCommandByName(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	n, err := url.QueryUnescape(vars[NAME])
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
 	results := []models.Command{}
 	err = getCommandByName(&results, n)
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -168,7 +168,7 @@ func restDeleteCommandById(w http.ResponseWriter, r *http.Request) {
 	var c models.Command
 	err := getCommandById(&c, id)
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
@@ -176,19 +176,19 @@ func restDeleteCommandById(w http.ResponseWriter, r *http.Request) {
 	// Check if the command is still in use by a device profile
 	isStillInUse, err := isCommandStillInUse(c)
 	if err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
 	if isStillInUse {
 		err = errors.New("Can't delete command.  Its still in use by Device Profiles")
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusConflict)
 		return
 	}
 
 	if err := deleteCommandById(id); err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		if err == mgo.ErrNotFound {
 			http.Error(w, err.Error(), http.StatusNotFound)
 		} else if err == ErrCommandStillInUse {

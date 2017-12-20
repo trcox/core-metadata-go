@@ -32,14 +32,14 @@ func restGetProvisionWatchers(w http.ResponseWriter, _ *http.Request) {
 	res := make([]models.ProvisionWatcher, 0)
 	if err := getAllProvisionWatchers(&res); err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
 	// Check the length
 	if len(res) > configuration.ReadMaxLimit {
 		err := errors.New("Max limit exceeded")
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusRequestEntityTooLarge)
 		return
 	}
@@ -57,17 +57,17 @@ func restDeleteProvisionWatcherById(w http.ResponseWriter, r *http.Request) {
 	if err := getProvisionWatcherById(&pw, id); err != nil {
 		if err == mgo.ErrNotFound {
 			errMessage := "Provision Watcher not found by ID: " + err.Error()
-			loggingClient.Error(errMessage, "")
+			loggingClient.Debug(errMessage, "")
 			http.Error(w, errMessage, http.StatusNotFound)
 		} else {
-			loggingClient.Error(err.Error(), "")
+			loggingClient.Debug(err.Error(), "")
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		}
 		return
 	}
 
 	if err := deleteProvisionWatcher(pw, w); err != nil {
-		loggingClient.Error("Error deleting provision watcher", "")
+		loggingClient.Debug("Error deleting provision watcher", "")
 		return
 	}
 
@@ -79,7 +79,7 @@ func restDeleteProvisionWatcherByName(w http.ResponseWriter, r *http.Request) {
 	n, err := url.QueryUnescape(vars[NAME])
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
@@ -89,16 +89,16 @@ func restDeleteProvisionWatcherByName(w http.ResponseWriter, r *http.Request) {
 		if err == mgo.ErrNotFound {
 			errMessage := "Provision watcher not found: " + err.Error()
 			http.Error(w, errMessage, http.StatusNotFound)
-			loggingClient.Error(errMessage, "")
+			loggingClient.Debug(errMessage, "")
 		} else {
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		}
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
 	if err = deleteProvisionWatcher(pw, w); err != nil {
-		loggingClient.Error("Problem deleting provision watcher: "+err.Error(), "")
+		loggingClient.Debug("Problem deleting provision watcher: "+err.Error(), "")
 		return
 	}
 
@@ -128,11 +128,11 @@ func restGetProvisionWatcherById(w http.ResponseWriter, r *http.Request) {
 	if err := getProvisionWatcherById(&res, id); err != nil {
 		if err == mgo.ErrNotFound {
 			errMessage := "Problem getting provision watcher by ID: " + err.Error()
-			loggingClient.Error(errMessage, "")
+			loggingClient.Debug(errMessage, "")
 			http.Error(w, errMessage, http.StatusNotFound)
 		} else {
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
-			loggingClient.Error(err.Error(), "")
+			loggingClient.Debug(err.Error(), "")
 		}
 		return
 	}
@@ -146,7 +146,7 @@ func restGetProvisionWatcherByName(w http.ResponseWriter, r *http.Request) {
 	n, err := url.QueryUnescape(vars[NAME])
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 	var res models.ProvisionWatcher
@@ -155,9 +155,9 @@ func restGetProvisionWatcherByName(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			http.Error(w, err.Error(), http.StatusNotFound)
-			loggingClient.Error("Provision watcher not found: "+err.Error(), "")
+			loggingClient.Debug("Provision watcher not found: "+err.Error(), "")
 		} else {
-			loggingClient.Error(err.Error(), "")
+			loggingClient.Debug(err.Error(), "")
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		}
 		return
@@ -174,10 +174,10 @@ func restGetProvisionWatchersByProfileId(w http.ResponseWriter, r *http.Request)
 	var dp models.DeviceProfile
 	if err := getDeviceProfileById(&dp, pid); err != nil {
 		if err == mgo.ErrNotFound {
-			loggingClient.Error("Device profile not found: "+err.Error(), "")
+			loggingClient.Debug("Device profile not found: "+err.Error(), "")
 			http.Error(w, err.Error(), http.StatusNotFound)
 		} else {
-			loggingClient.Error(err.Error(), "")
+			loggingClient.Debug(err.Error(), "")
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		}
 		return
@@ -187,7 +187,7 @@ func restGetProvisionWatchersByProfileId(w http.ResponseWriter, r *http.Request)
 	err := getProvisionWatcherByProfileId(&res, pid)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
-		loggingClient.Error("Problem getting provision watcher: "+err.Error(), "")
+		loggingClient.Debug("Problem getting provision watcher: "+err.Error(), "")
 		return
 	}
 
@@ -199,7 +199,7 @@ func restGetProvisionWatchersByProfileName(w http.ResponseWriter, r *http.Reques
 	pn, err := url.QueryUnescape(vars[NAME])
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
@@ -208,9 +208,9 @@ func restGetProvisionWatchersByProfileName(w http.ResponseWriter, r *http.Reques
 	if err = getDeviceProfileByName(&dp, pn); err != nil {
 		if err == mgo.ErrNotFound {
 			http.Error(w, "Device profile not found", http.StatusNotFound)
-			loggingClient.Error("Device profile not found: "+err.Error(), "")
+			loggingClient.Debug("Device profile not found: "+err.Error(), "")
 		} else {
-			loggingClient.Error("Problem getting device profile: "+err.Error(), "")
+			loggingClient.Debug("Problem getting device profile: "+err.Error(), "")
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		}
 		return
@@ -220,7 +220,7 @@ func restGetProvisionWatchersByProfileName(w http.ResponseWriter, r *http.Reques
 	err = getProvisionWatcherByProfileId(&res, dp.Id.Hex())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
-		loggingClient.Error("Problem getting provision watcher: "+err.Error(), "")
+		loggingClient.Debug("Problem getting provision watcher: "+err.Error(), "")
 		return
 	}
 
@@ -236,9 +236,9 @@ func restGetProvisionWatchersByServiceId(w http.ResponseWriter, r *http.Request)
 	if err := getDeviceServiceById(&ds, sid); err != nil {
 		if err == mgo.ErrNotFound {
 			http.Error(w, "Device Service not found", http.StatusNotFound)
-			loggingClient.Error("Device service not found: "+err.Error(), "")
+			loggingClient.Debug("Device service not found: "+err.Error(), "")
 		} else {
-			loggingClient.Error("Problem getting device service: "+err.Error(), "")
+			loggingClient.Debug("Problem getting device service: "+err.Error(), "")
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		}
 		return
@@ -248,7 +248,7 @@ func restGetProvisionWatchersByServiceId(w http.ResponseWriter, r *http.Request)
 	err := getProvisionWatchersByServiceId(&res, sid)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
-		loggingClient.Error("Problem getting provision watcher: "+err.Error(), "")
+		loggingClient.Debug("Problem getting provision watcher: "+err.Error(), "")
 		return
 	}
 
@@ -260,7 +260,7 @@ func restGetProvisionWatchersByServiceName(w http.ResponseWriter, r *http.Reques
 	sn, err := url.QueryUnescape(vars[NAME])
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
@@ -269,10 +269,10 @@ func restGetProvisionWatchersByServiceName(w http.ResponseWriter, r *http.Reques
 	if err = getDeviceServiceByName(&ds, sn); err != nil {
 		if err == mgo.ErrNotFound {
 			http.Error(w, "Device service not found", http.StatusNotFound)
-			loggingClient.Error("Device service not found: "+err.Error(), "")
+			loggingClient.Debug("Device service not found: "+err.Error(), "")
 		} else {
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
-			loggingClient.Error("Problem getting device service: "+err.Error(), "")
+			loggingClient.Debug("Problem getting device service: "+err.Error(), "")
 		}
 		return
 	}
@@ -282,7 +282,7 @@ func restGetProvisionWatchersByServiceName(w http.ResponseWriter, r *http.Reques
 	err = getProvisionWatchersByServiceId(&res, ds.Service.Id.Hex())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
-		loggingClient.Error("Problem getting provision watcher: "+err.Error(), "")
+		loggingClient.Debug("Problem getting provision watcher: "+err.Error(), "")
 		return
 	}
 
@@ -294,20 +294,20 @@ func restGetProvisionWatchersByIdentifier(w http.ResponseWriter, r *http.Request
 	k, err := url.QueryUnescape(vars[KEY])
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 	v, err := url.QueryUnescape(vars[VALUE])
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		return
 	}
 
 	res := make([]models.ProvisionWatcher, 0)
 	if err := getProvisionWatchersByIdentifier(&res, k, v); err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
-		loggingClient.Error("Problem getting provision watchers: "+err.Error(), "")
+		loggingClient.Debug("Problem getting provision watchers: "+err.Error(), "")
 		return
 	}
 
@@ -318,7 +318,7 @@ func restAddProvisionWatcher(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	var pw models.ProvisionWatcher
 	if err := json.NewDecoder(r.Body).Decode(&pw); err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -326,7 +326,7 @@ func restAddProvisionWatcher(w http.ResponseWriter, r *http.Request) {
 	// Check if the name exists
 	if pw.Name == "" {
 		err := errors.New("No name provided for new provision watcher")
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusConflict)
 		return
 	}
@@ -337,10 +337,10 @@ func restAddProvisionWatcher(w http.ResponseWriter, r *http.Request) {
 		// Try by name
 		if err = getDeviceProfileByName(&pw.Profile, pw.Profile.Name); err != nil {
 			if err == mgo.ErrNotFound {
-				loggingClient.Error("Device profile not found for provision watcher: "+err.Error(), "")
+				loggingClient.Debug("Device profile not found for provision watcher: "+err.Error(), "")
 				http.Error(w, "Device profile not found for provision watcher", http.StatusConflict)
 			} else {
-				loggingClient.Error("Problem getting device profile: "+err.Error(), "")
+				loggingClient.Debug("Problem getting device profile: "+err.Error(), "")
 				http.Error(w, err.Error(), http.StatusServiceUnavailable)
 			}
 			return
@@ -354,9 +354,9 @@ func restAddProvisionWatcher(w http.ResponseWriter, r *http.Request) {
 		if err = getDeviceServiceByName(&pw.Service, pw.Service.Service.Name); err != nil {
 			if err == mgo.ErrNotFound {
 				http.Error(w, "Device service not found for provision watcher", http.StatusConflict)
-				loggingClient.Error("Device service not found for provision watcher: "+err.Error(), "")
+				loggingClient.Debug("Device service not found for provision watcher: "+err.Error(), "")
 			} else {
-				loggingClient.Error("Problem getting device service for provision wathcer: "+err.Error(), "")
+				loggingClient.Debug("Problem getting device service for provision wathcer: "+err.Error(), "")
 				http.Error(w, err.Error(), http.StatusServiceUnavailable)
 			}
 			return
@@ -365,10 +365,10 @@ func restAddProvisionWatcher(w http.ResponseWriter, r *http.Request) {
 
 	if err := addProvisionWatcher(&pw); err != nil {
 		if err == ErrDuplicateName {
-			loggingClient.Error("Duplicate name for the provision watcher: "+err.Error(), "")
+			loggingClient.Debug("Duplicate name for the provision watcher: "+err.Error(), "")
 			http.Error(w, "Duplicate name for the provision watcher", http.StatusConflict)
 		} else {
-			loggingClient.Error("Problem adding provision watcher: "+err.Error(), "")
+			loggingClient.Debug("Problem adding provision watcher: "+err.Error(), "")
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		}
 		return
@@ -390,7 +390,7 @@ func restUpdateProvisionWatcher(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	var from models.ProvisionWatcher
 	if err := json.NewDecoder(r.Body).Decode(&from); err != nil {
-		loggingClient.Error(err.Error(), "")
+		loggingClient.Debug(err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -403,9 +403,9 @@ func restUpdateProvisionWatcher(w http.ResponseWriter, r *http.Request) {
 		if err = getProvisionWatcherByName(&to, from.Name); err != nil {
 			if err == mgo.ErrNotFound {
 				http.Error(w, "Provision watcher not found", http.StatusNotFound)
-				loggingClient.Error("Provision watcher not found: "+err.Error(), "")
+				loggingClient.Debug("Provision watcher not found: "+err.Error(), "")
 			} else {
-				loggingClient.Error("Problem getting provision watcher: "+err.Error(), "")
+				loggingClient.Debug("Problem getting provision watcher: "+err.Error(), "")
 				http.Error(w, err.Error(), http.StatusServiceUnavailable)
 			}
 			return
@@ -413,12 +413,12 @@ func restUpdateProvisionWatcher(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := updateProvisionWatcherFields(from, &to, w); err != nil {
-		loggingClient.Error("Problem updating provision watcher: "+err.Error(), "")
+		loggingClient.Debug("Problem updating provision watcher: "+err.Error(), "")
 		return
 	}
 
 	if err := updateProvisionWatcher(to); err != nil {
-		loggingClient.Error("Problem updating provision watcher: "+err.Error(), "")
+		loggingClient.Debug("Problem updating provision watcher: "+err.Error(), "")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
